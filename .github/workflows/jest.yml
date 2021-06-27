@@ -27,7 +27,7 @@ jobs:
       
       - name: Set experimental ecmascript modules environment variable
         run: |
-          echo "NODE_OPTIONS=--experimantal-vm-modules" >> $GITHUB_ENV
+          echo "NODE_OPTIONS=--experimental-vm-modules" >> $GITHUB_ENV
 
       # Runs a single command using the runners shell
       - name: Run Jest
