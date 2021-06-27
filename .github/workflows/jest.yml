@@ -30,9 +30,9 @@ jobs:
           echo "NODE_OPTIONS=--experimental-vm-modules" >> $GITHUB_ENV
 
       # Runs a single command using the runners shell
-      - uses: actions/checkout@v2
       - name: Install modules
         run: npm ci
+
       - name: Run tests
         run: npx jest
 
