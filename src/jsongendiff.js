@@ -16,7 +16,7 @@ const jsonGendiff = (filepath1, filepath2, format = 'json') => {
       }
 
       if (file1keys.includes(key) && file2keys.includes(key)) {   //property was changed
-        return [...acc, `  - ${key}: ${file1Obj[key]}`, `  + ${key}, ${file2Obj[key]}`];
+        return [...acc, `  - ${key}: ${file1Obj[key]}`, `  + ${key}: ${file2Obj[key]}`];
       }
 
       if (!file1keys.includes(key) && file2keys.includes(key)) {  //property was added
