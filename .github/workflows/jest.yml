@@ -35,3 +35,6 @@ jobs:
 
       - name: Run tests
         run: npx jest
+
+      - name: Run eslint
+        run: npx eslint .
