@@ -24,10 +24,6 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
-      - name: Set experimental ecmascript modules environment variable
-        run: |
-          echo "NODE_OPTIONS=--experimental-vm-modules" >> $GITHUB_ENV
 
       # Runs a single command using the runners shell
       - name: Install modules
@@ -35,6 +31,3 @@ jobs:
 
       - name: Run tests
         run: npx jest
-
-      - name: Run eslint
-        run: eslint .
