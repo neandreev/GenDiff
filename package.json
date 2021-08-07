@@ -1,7 +1,7 @@
 {
-  "name": "@hexlet/code",
+  "name": "gendiff",
   "version": "1.1.0",
-  "description": "[![Actions Status](https://github.com/neandreev/frontend-project-lvl2/workflows/hexlet-check/badge.svg)](https://github.com/neandreev/frontend-project-lvl2/actions)",
+  "description": "CLI utility made for configs diff",
   "bin": {
     "gendiff": "bin/gendiff.js"
   },
