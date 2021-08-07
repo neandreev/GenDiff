@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Jest Tests
+name: Tests
 
 # Controls when the workflow will run
 on:
@@ -38,3 +38,9 @@ jobs:
 
       - name: Run eslint
         run: npx eslint .
+        
+      - name: Setup Code Climate
+        uses: amancevice/setup-code-climate@v0
+        with:
+          cc_test_reporter_id: 4a1edf871ffe8bc68379513854923a227cfd98b0b1acbdbade8c6c7a448cdead
+          cc_test_reporter_version: latest
