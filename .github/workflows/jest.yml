@@ -38,9 +38,11 @@ jobs:
 
       - name: Run eslint
         run: npx eslint .
-        
-      - name: Setup Code Climate
-        uses: amancevice/setup-code-climate@v0
+          
+      - name: Test & publish code coverage
+        uses: paambaati/codeclimate-action@v2.7.5
+        env:
+          CC_TEST_REPORTER_ID: 4a1edf871ffe8bc68379513854923a227cfd98b0b1acbdbade8c6c7a448cdead
         with:
-          cc_test_reporter_id: 4a1edf871ffe8bc68379513854923a227cfd98b0b1acbdbade8c6c7a448cdead
-          cc_test_reporter_version: latest
+          coverageCommand: npx jest --coverage
+          debug: true
