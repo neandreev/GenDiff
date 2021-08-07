@@ -1,11 +1,17 @@
 install:
 	npm install
 
-ci:
-	npm ci
+publish:
+	npm publish --dry-run
+
+link:
+	npm link
+
+unlink:
+	npm unlink gendiff --global
 
 test:
 	npm test
 
-link:
-	npm link
+ci:
+	npm ci
