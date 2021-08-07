@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Jest Tests
+name: Tests
 
 # Controls when the workflow will run
 on:
@@ -38,3 +38,11 @@ jobs:
 
       - name: Run eslint
         run: npx eslint .
+          
+      - name: Test & publish code coverage
+        uses: paambaati/codeclimate-action@v2.7.5
+        env:
+          CC_TEST_REPORTER_ID: 4a1edf871ffe8bc68379513854923a227cfd98b0b1acbdbade8c6c7a448cdead
+        with:
+          coverageCommand: npx jest --coverage
+          debug: true
