@@ -1,61 +1,88 @@
 import _ from 'lodash';
 
-const stringByStatus = (stat, value) => {
-  switch (stat) {
+const renderValue = (value) => {
+  const markedValue = (typeof value === 'string')
+    ? `'${value}'`
+    : value;
+
+  const formattedValue = _.isObject(markedValue)
+    ? '[complex value]'
+    : markedValue;
+
+  return formattedValue;
+};
+
+const blanks = {
+  changed: (originalValue, modifiedValue) => `was updated. From ${originalValue} to ${modifiedValue}`,
+  added: (value) => `was added with value: ${value}`,
+  removed: () => 'was removed',
+};
+
+const renderElement = (elem) => {
+  const {
+    keypath, status, valueAfter, valueBefore,
+  } = elem;
+
+  const blank = `Property '${keypath}'`;
+
+  switch (status) {
     case 'added':
-      return `was added with value: ${value}`;
+      return `${blank} ${blanks.added(valueAfter)}`;
     case 'removed':
-      return 'was removed';
+      return `${blank} ${blanks.removed()}`;
+    case 'changed':
+      return `${blank} ${blanks.changed(valueBefore, valueAfter)}`;
     default:
       throw new Error();
   }
 };
 
-const renderDifferenceString = (acc, { keypath, status, value }, index, arr) => {
-  const blank = `Property '${keypath}'`;
+const parseElement = (elem) => {
+  const { keypath, status } = elem;
 
-  const [nextProp, prevProp] = [arr[index + 1], arr[index - 1]];
-  if (!!prevProp && prevProp.keypath === keypath) return acc;
-  if (!!nextProp && nextProp.keypath === keypath) {
-    const updatedValue = nextProp.value;
-    const changedBlank = `was updated. From ${value} to ${updatedValue}`;
-    return [...acc, [blank, changedBlank].join(' ')];
-  }
+  const [valueBefore, valueAfter] = [
+    renderValue(elem.valueBefore),
+    renderValue(elem.valueAfter),
+  ];
 
-  return [...acc, [blank, stringByStatus(status, value)].join(' ')];
+  const parsedElement = {
+    keypath,
+    status,
+    valueBefore,
+    valueAfter,
+  };
+
+  return parsedElement;
 };
 
-const parseElements = (acc, elem) => {
-  const {
-    fullKey, valueAfter, valueBefore, status,
-  } = elem;
+const makeFlatDiff = (elem, path = []) => {
+  const unchangedProps = _.filter(elem, ['status', 'unchanged']);
+  const changedProps = _.difference(elem, unchangedProps);
 
-  const value = (status === 'added') ? valueAfter : valueBefore;
-  const markedValue = (typeof value === 'string') ? `'${value}'` : value;
-  const formattedValue = _.isObject(markedValue) ? '[complex value]' : markedValue;
-  return [...acc, { keypath: fullKey.join('.'), status, value: formattedValue }];
-};
+  const flatDiff = changedProps.reduce((acc, prop) => {
+    const { key, children } = prop;
+    const newKeysArray = [...path, key];
 
-const makeDiffFlat = (elem, path = []) => {
-  const unchanged = _.filter(elem, ['status', 'unchanged']);
-  const changed = _.difference(elem, unchanged);
-
-  const result = changed.reduce((acc, prop) => {
     if (_.has(prop, 'children')) {
-      return [...acc, ...makeDiffFlat(prop.children, [...path, prop.key])];
+      return [...acc, ...makeFlatDiff(children, newKeysArray)];
     }
-    return [...acc, ({ ...prop, fullKey: [...path, prop.key] })];
+
+    const keypath = newKeysArray.join('.');
+    const flatProp = { ...prop, keypath };
+
+    return [...acc, flatProp];
   }, []);
 
-  return result;
+  return flatDiff;
 };
 
 const stylish = (diff) => {
-  const flatDiff = makeDiffFlat(diff);
-  const parsedElements = flatDiff.reduce(parseElements, []);
-  const plainOutput = parsedElements.reduce(renderDifferenceString, []).join('\n');
+  const renderedOutput = makeFlatDiff(diff)
+    .map(parseElement)
+    .map(renderElement)
+    .join('\n');
 
-  return plainOutput;
+  return renderedOutput;
 };
 
 export default stylish;

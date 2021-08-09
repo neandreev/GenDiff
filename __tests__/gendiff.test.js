@@ -33,7 +33,6 @@ describe.each([
       const result = fs.readFileSync(getResultPath(format), 'utf-8');
 
       const gendiffResult = gendiff(filepath1, filepath2, format);
-      console.log(gendiffResult);
       expect(gendiffResult).toEqual(result);
     });
   });

@@ -35,7 +35,7 @@ export default (filepath1, filepath2, format) => {
         return [...acc, prop];
       }
 
-      return [...acc, { ...prop, status: 'removed' }, { ...prop, status: 'added' }];
+      return [...acc, { ...prop, status: 'changed' }];
     }, []);
 
     return _.sortBy(gendiffTree, ['key']);

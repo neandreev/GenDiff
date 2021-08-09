@@ -12,57 +12,57 @@ const addSign = (status) => {
   }
 };
 
-const stylishValue = (prop, depth) => {
+const renderValue = (prop) => {
   const {
-    key, valueBefore, valueAfter, status,
+    valueBefore, valueAfter, status, depth,
   } = prop;
   const spaces = addSpaces(depth);
+  const key = `${spaces}${addSign(status)}${prop.key}`;
   const value = (status === 'added') ? valueAfter : valueBefore;
 
-  if (!_.isObject(value)) return `${spaces}${addSign(status)}${key}: ${value}`;
+  if (!_.isObject(value)) return `${key}: ${value}`;
 
-  const result = Object.entries(value).flatMap(([entryKey, entryValue]) => {
-    const newProp = {
-      key: entryKey,
-      valueBefore: entryValue,
-      status: 'unchanged',
-    };
+  const entryToElem = ([entrykey, entryvalue]) => (
+    { depth: depth + 1, key: entrykey, valueBefore: entryvalue }
+  );
 
-    return stylishValue(newProp, depth + 1);
-  });
+  const renderedValues = Object.entries(value)
+    .map(entryToElem)
+    .flatMap(renderValue);
 
   return [
-    `${spaces}${addSign(status)}${key}: {`,
-    ...result,
+    `${key}: {`,
+    ...renderedValues,
     `${addSpaces(depth + 1)}}`,
   ];
 };
 
-const stylish = (tree, depth = 0) => {
-  const result = tree.flatMap((prop) => {
-    const { status, key } = prop;
+const renderElement = (depth, stylish) => (prop) => {
+  const { children, status, key } = prop;
+  const spaces = addSpaces(depth + 1);
 
-    const spaces = addSpaces(depth);
+  if (status === 'children') {
+    return [
+      `${spaces}${key}: {`,
+      stylish(children, depth + 1),
+      `${spaces}}`,
+    ];
+  }
 
-    if (status === 'children') {
-      return [
-        `${spaces}    ${key}: {`,
-        stylish(prop.children, depth + 1),
-        `${spaces}    }`,
-      ];
-    }
+  if (status === 'changed') {
+    return [
+      renderValue({ ...prop, depth, status: 'removed' }),
+      renderValue({ ...prop, depth, status: 'added' }),
+    ];
+  }
 
-    if (status === 'changed') {
-      return [
-        stylishValue({ ...prop, status: 'removed' }, depth),
-        stylishValue({ ...prop, status: 'added' }, depth),
-      ];
-    }
-
-    return stylishValue(prop, depth);
-  });
-
-  return result.join('\n');
+  return renderValue({ ...prop, depth });
 };
 
-export default (tree) => `{\n${stylish(tree)}\n}`;
+const stylish = (diff, depth = 0) => {
+  const renderedElements = diff.flatMap(renderElement(depth, stylish));
+  const renderedOutput = _.flatten(renderedElements).join('\n');
+  return renderedOutput;
+};
+
+export default (diff) => `{\n${stylish(diff)}\n}`;
