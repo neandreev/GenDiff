@@ -38,7 +38,7 @@ export default (filepath1, filepath2, format) => {
       return [...acc, { ...prop, status: 'removed' }, { ...prop, status: 'added' }];
     }, []);
 
-    return gendiffTree;
+    return _.sortBy(gendiffTree, ['key']);
   };
 
   const diff = gendiff(file1Obj, file2Obj);

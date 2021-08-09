@@ -34,12 +34,12 @@ const stylishValue = (prop, depth) => {
   return [
     `${spaces}${addSign(status)}${key}: {`,
     ...result,
-    `${spaces}    }`,
+    `${addSpaces(depth + 1)}}`,
   ];
 };
 
 const stylish = (tree, depth = 0) => {
-  const result = _.sortBy(tree, ['key']).flatMap((prop) => {
+  const result = tree.flatMap((prop) => {
     const { status, key } = prop;
 
     const spaces = addSpaces(depth);
@@ -52,10 +52,17 @@ const stylish = (tree, depth = 0) => {
       ];
     }
 
+    if (status === 'changed') {
+      return [
+        stylishValue({ ...prop, status: 'removed' }, depth),
+        stylishValue({ ...prop, status: 'added' }, depth),
+      ];
+    }
+
     return stylishValue(prop, depth);
   });
 
-  return _.flatten(result).join('\n');
+  return result.join('\n');
 };
 
 export default (tree) => `{\n${stylish(tree)}\n}`;

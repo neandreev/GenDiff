@@ -1,54 +1,59 @@
 import _ from 'lodash';
 
-const stylish = (diff) => {
-  const makeFlat = (elem, path = []) => {
-    const clearDiff = _.filter(elem, ({ status }) => status !== 'unchanged');
+const stringByStatus = (stat, value) => {
+  switch (stat) {
+    case 'added':
+      return `was added with value: ${value}`;
+    case 'removed':
+      return 'was removed';
+    default:
+      throw new Error();
+  }
+};
 
-    const result = clearDiff.reduce((acc, prop) => {
-      if (_.has(prop, 'children')) {
-        return [...acc, ...makeFlat(prop.children, [...path, prop.key])];
-      }
-      return [...acc, ({ ...prop, fullKey: [...path, prop.key] })];
-    }, []);
+const renderDifferenceString = (acc, { keypath, status, value }, index, arr) => {
+  const blank = `Property '${keypath}'`;
 
-    return result;
-  };
+  const [nextProp, prevProp] = [arr[index + 1], arr[index - 1]];
+  if (!!prevProp && prevProp.keypath === keypath) return acc;
+  if (!!nextProp && nextProp.keypath === keypath) {
+    const updatedValue = nextProp.value;
+    const changedBlank = `was updated. From ${value} to ${updatedValue}`;
+    return [...acc, [blank, changedBlank].join(' ')];
+  }
 
-  const result = _.flatten(makeFlat(diff, []));
-  const pathAndValue = _.reduce(result, (acc, elem) => {
-    const {
-      fullKey, valueAfter, valueBefore, status,
-    } = elem;
+  return [...acc, [blank, stringByStatus(status, value)].join(' ')];
+};
 
-    const value = (status === 'added') ? valueAfter : valueBefore;
-    const markedValue = (typeof value === 'string') ? `'${value}'` : value;
-    const formattedValue = _.isObject(markedValue) ? '[complex value]' : markedValue;
+const parseElements = (acc, elem) => {
+  const {
+    fullKey, valueAfter, valueBefore, status,
+  } = elem;
 
-    return [...acc, [fullKey.join('.'), status, formattedValue]];
-  }, []);
-  const sorted = _.sortBy(pathAndValue, [0]);
+  const value = (status === 'added') ? valueAfter : valueBefore;
+  const markedValue = (typeof value === 'string') ? `'${value}'` : value;
+  const formattedValue = _.isObject(markedValue) ? '[complex value]' : markedValue;
+  return [...acc, { keypath: fullKey.join('.'), status, value: formattedValue }];
+};
 
-  const plainOutput = sorted.reduce((acc, [keypath, propStatus, value], index) => {
-    const blank = `Property '${keypath}'`;
-    const stringByStatus = (stat) => {
-      switch (stat) {
-        case 'added':
-          return `was added with value: ${value}`;
-        default:
-          return 'was removed';
-      }
-    };
+const makeDiffFlat = (elem, path = []) => {
+  const unchanged = _.filter(elem, ['status', 'unchanged']);
+  const changed = _.difference(elem, unchanged);
 
-    const [nextProp, prevProp] = [sorted[index + 1], sorted[index - 1]];
-    if (!!prevProp && prevProp[0] === keypath) return acc;
-    if (!!nextProp && nextProp[0] === keypath) {
-      const updatedValue = nextProp[2];
-      const changedBlank = `was updated. From ${value} to ${updatedValue}`;
-      return [...acc, [blank, changedBlank].join(' ')];
+  const result = changed.reduce((acc, prop) => {
+    if (_.has(prop, 'children')) {
+      return [...acc, ...makeDiffFlat(prop.children, [...path, prop.key])];
     }
+    return [...acc, ({ ...prop, fullKey: [...path, prop.key] })];
+  }, []);
 
-    return [...acc, [blank, stringByStatus(propStatus)].join(' ')];
-  }, []).join('\n');
+  return result;
+};
+
+const stylish = (diff) => {
+  const flatDiff = makeDiffFlat(diff);
+  const parsedElements = flatDiff.reduce(parseElements, []);
+  const plainOutput = parsedElements.reduce(renderDifferenceString, []).join('\n');
 
   return plainOutput;
 };
