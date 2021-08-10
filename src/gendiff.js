@@ -2,46 +2,45 @@ import _ from 'lodash';
 import getFormatter from './formatters/formatters.js';
 import parse from './parsers.js';
 
-export default (filepath1, filepath2, format) => {
-  const [file1Obj, file2Obj] = [parse(filepath1), parse(filepath2)];
-  const formatter = getFormatter(format);
+export default (filePath1, filePath2, outputFormat) => {
+  const parsedFile1 = parse(filePath1);
+  const parsedFile2 = parse(filePath2);
+  const format = getFormatter(outputFormat);
 
   const gendiff = (object1, object2) => {
-    const [file1keys, file2keys] = [object1, object2].map(Object.keys);
+    const file1keys = Object.keys(object1);
+    const file2keys = Object.keys(object2);
     const keys = _.union([...file1keys, ...file2keys]);
 
-    const gendiffTree = keys.reduce((acc, key) => {
-      const [valueBefore, valueAfter] = [object1[key], object2[key]];
-      const prop = {
-        key,
-        valueBefore,
-        valueAfter,
-        status: 'unchanged',
-      };
+    const gendiffTree = keys.map((key) => {
+      const valueBefore = object1[key];
+      const valueAfter = object2[key];
+      const prop = { key, valueBefore, valueAfter };
 
       if (_.isObject(valueBefore) && _.isObject(valueAfter)) {
-        return [...acc, { ...prop, status: 'children', children: gendiff(valueBefore, valueAfter) }];
+        return { key, status: 'children', children: gendiff(valueBefore, valueAfter) };
       }
 
-      if (!file1keys.includes(key) && file2keys.includes(key)) { // property was added
-        return [...acc, { ...prop, status: 'added' }];
+      if (!file1keys.includes(key) && file2keys.includes(key)) {
+        return { ...prop, status: 'added' };
       }
 
-      if (file1keys.includes(key) && !file2keys.includes(key)) { // property was removed
-        return [...acc, { ...prop, status: 'removed' }];
+      if (file1keys.includes(key) && !file2keys.includes(key)) {
+        return { ...prop, status: 'removed' };
       }
 
       if (valueBefore === valueAfter) {
-        return [...acc, prop];
+        return { ...prop, status: 'unchanged' };
       }
 
-      return [...acc, { ...prop, status: 'changed' }];
-    }, []);
+      return { ...prop, status: 'changed' };
+    });
 
-    return _.sortBy(gendiffTree, ['key']);
+    const sortedGendiffTree = _.sortBy(gendiffTree, ['key']);
+    return sortedGendiffTree;
   };
 
-  const diff = gendiff(file1Obj, file2Obj);
-  const resultText = formatter(diff);
-  return resultText;
+  const diff = gendiff(parsedFile1, parsedFile2);
+  const renderedDiff = format(diff);
+  return renderedDiff;
 };
