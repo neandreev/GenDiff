@@ -8,7 +8,9 @@ export default (format) => {
       return plainFormatter;
     case 'json':
       return jsonFormatter;
-    default:
+    case 'pretty':
       return prettyFormatter;
+    default:
+      throw new Error(`Unknown output format: ${format}`);
   }
 };
